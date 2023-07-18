@@ -28,3 +28,8 @@ Release:
 1. Enable custom scripts
 2. Put the script file into your Firebot script folder
 3. Import `TaskSetup.firebotsetup` into Firebot to set up the commands that use this.
+
+## OBS Setup
+
+1. Add `index.html` from extras, to your OBS Browser source.
+2. Make sure `tasklist.txt` is in the same folder as `index.html`.
