@@ -22,3 +22,9 @@ Release:
 
 - Keep the script definition object (that contains the `run`, `getScriptManifest`, and `getDefaultParameters` funcs) in the `index.ts` file as it's important those function names don't get minimized.
 - Edit the `"scriptOutputName"` property in `package.json` to change the filename of the outputted script.
+
+## Firebot setup
+
+1. Enable custom scripts
+2. Put the script file into your Firebot script folder
+3. Import `TaskSetup.firebotsetup` into Firebot to set up the commands that use this.
