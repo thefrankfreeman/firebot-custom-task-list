@@ -30,7 +30,7 @@ export interface Params extends Record<string, any> {
     /**
      * Pass this back to the `response.effects.chatter` field for firebot
      */
-    sendMessagesAs: Enumerator;
+    sendMessagesAs: string;
 }
 
 /**
@@ -60,13 +60,16 @@ interface CommandHandler<THandlerArgs extends {} = {}> {
     handler: (runRequest: RunRequest<Params>, args: THandlerArgs) => Effects.Effect[];
 }
 
+// -------
+// PARSERS
+
 /**
  * A parser to find the username of the sender of a chat message
  * 
  * @param runRequest The runRequest object from firebot
  * @returns The message sender, or null
  */
-export function commandSender(runRequest: RunRequest<Params>): { sender: string } | null {
+export function commandSender(runRequest: RunRequest<Params>): { sender: string; } | null {
     const sender = runRequest.trigger.metadata.username ?? null;
     return !!sender ? { sender } : null;
 }
@@ -77,12 +80,15 @@ export function commandSender(runRequest: RunRequest<Params>): { sender: string 
  * @param index The target index in the chat message words
  * @returns The parser that returns a username or null
  */
-export function argAsUser(index: number): (runRequest: RunRequest<Params>) => ({ user: string } | null) {
+export function argAsUser(index: number): (runRequest: RunRequest<Params>) => ({ user: string; } | null) {
     return (runRequest: RunRequest<Params>) => {
         const user = cleanUserName(runRequest.trigger.metadata.userCommand?.args[index]);
         return user?.length ? { user } : null;
-    }
+    };
 }
+
+// --------
+// HANDLERS
 
 /**
  * Handler function to add a task for the sender
@@ -90,7 +96,7 @@ export function argAsUser(index: number): (runRequest: RunRequest<Params>) => ({
  * @param runRequest The RunRequest object from firebot
  * @param sender The name of the command sender
  */
-export function addTaskForSender(runRequest: RunRequest<Params>, args: { sender: string }): Effects.Effect[] {
+export function addTaskForSender(runRequest: RunRequest<Params>, args: { sender: string; }): Effects.Effect[] {
     const task = runRequest.trigger.metadata.userCommand.args.slice(1).join(' ');
     return new TaskList(runRequest.modules.fs).addTaskForUser(runRequest.parameters.filepath, args.sender, task);
 }
@@ -101,7 +107,7 @@ export function addTaskForSender(runRequest: RunRequest<Params>, args: { sender:
  * @param runRequest The RunRequest object from firebot
  * @param sender The name of the command sender
  */
-export function editSenderTask(runRequest: RunRequest<Params>, args: { sender: string }): Effects.Effect[] {
+export function editSenderTask(runRequest: RunRequest<Params>, args: { sender: string; }): Effects.Effect[] {
     const task = runRequest.trigger.metadata.userCommand.args.slice(1).join(' ');
     return new TaskList(runRequest.modules.fs).editUserTask(runRequest.parameters.filepath, args.sender, task);
 }
@@ -112,7 +118,7 @@ export function editSenderTask(runRequest: RunRequest<Params>, args: { sender: s
  * @param runRequest The RunRequest object from firebot
  * @param sender The name of the command sender
  */
-export function markSenderTaskAsDone(runRequest: RunRequest<Params>, args: { sender: string }): Effects.Effect[] {
+export function markSenderTaskAsDone(runRequest: RunRequest<Params>, args: { sender: string; }): Effects.Effect[] {
     return new TaskList(runRequest.modules.fs).markUserTaskAsDone(runRequest.parameters.filepath, args.sender);
 }
 
@@ -122,7 +128,7 @@ export function markSenderTaskAsDone(runRequest: RunRequest<Params>, args: { sen
  * @param runRequest The RunRequest object from firebot
  * @param sender The name of the command sender
  */
-export function markSenderTaskAsNotDone(runRequest: RunRequest<Params>, args: { sender: string }): Effects.Effect[] {
+export function markSenderTaskAsNotDone(runRequest: RunRequest<Params>, args: { sender: string; }): Effects.Effect[] {
     return new TaskList(runRequest.modules.fs).markUserTaskAsNotDone(runRequest.parameters.filepath, args.sender);
 }
 
@@ -132,7 +138,7 @@ export function markSenderTaskAsNotDone(runRequest: RunRequest<Params>, args: { 
  * @param runRequest The RunRequest object from firebot
  * @param sender The name of the command sender
  */
-export function removeSenderTask(runRequest: RunRequest<Params>, args: { sender: string }): Effects.Effect[] {
+export function removeSenderTask(runRequest: RunRequest<Params>, args: { sender: string; }): Effects.Effect[] {
     return new TaskList(runRequest.modules.fs).removeUserTask(runRequest.parameters.filepath, args.sender);
 }
 
@@ -152,17 +158,17 @@ export function removeAllTasks(runRequest: RunRequest<Params>): Effects.Effect[]
  * @param runRequest The RunRequest object from firebot
  * @param sender The name of the command sender
  */
-export function removeUserTask(runRequest: RunRequest<Params>, args: { user: string }): Effects.Effect[] {
+export function removeUserTask(runRequest: RunRequest<Params>, args: { user: string; }): Effects.Effect[] {
     return new TaskList(runRequest.modules.fs).removeUserTask(runRequest.parameters.filepath, args.user);
 }
 
-const addHandler: CommandHandler<{ sender: string }> = { command: "add", parser: commandSender, handler: addTaskForSender };
-const editHandler: CommandHandler<{ sender: string }> = { command: "edit", parser: commandSender, handler: editSenderTask };
-const doneHandler: CommandHandler<{ sender: string }> = { command: "done", parser: commandSender, handler: markSenderTaskAsDone };
-const undoHandler: CommandHandler<{ sender: string }> = { command: "undo", parser: commandSender, handler: markSenderTaskAsNotDone };
-const removeHandler: CommandHandler<{ sender: string }> = { command: "remove", parser: commandSender, handler: removeSenderTask };
+const addHandler: CommandHandler<{ sender: string; }> = { command: "add", parser: commandSender, handler: addTaskForSender };
+const editHandler: CommandHandler<{ sender: string; }> = { command: "edit", parser: commandSender, handler: editSenderTask };
+const doneHandler: CommandHandler<{ sender: string; }> = { command: "done", parser: commandSender, handler: markSenderTaskAsDone };
+const undoHandler: CommandHandler<{ sender: string; }> = { command: "undo", parser: commandSender, handler: markSenderTaskAsNotDone };
+const removeHandler: CommandHandler<{ sender: string; }> = { command: "remove", parser: commandSender, handler: removeSenderTask };
 const clearAllHandler: CommandHandler = { command: "clearAll", handler: removeAllTasks };
-const clearUserHandler: CommandHandler<{ user: string }> = { command: "clearUser", parser: argAsUser(1), handler: removeUserTask };
+const clearUserHandler: CommandHandler<{ user: string; }> = { command: "clearUser", parser: argAsUser(1), handler: removeUserTask };
 
 export const taskHandlers = [
     addHandler,
