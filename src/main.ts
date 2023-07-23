@@ -1,11 +1,6 @@
 import { Firebot, ScriptReturnObject } from "@crowbartools/firebot-custom-scripts-types";
-
-interface Params {
-    command: Enumerator;
-    commandHelpText: string;
-    filepath: string;
-    sendMessagesAs: Enumerator;
-}
+import { Effects } from "@crowbartools/firebot-custom-scripts-types/types/effects";
+import { Params, taskHandlers } from "./commands";
 
 const script: Firebot.CustomScript<Params> = {
     getScriptManifest: () => {
@@ -21,7 +16,7 @@ const script: Firebot.CustomScript<Params> = {
         return {
             command: {
                 type: "enum",
-                options: ["main", "add", "edit", "done", "undo", "remove", "clearAll", "clearUser"],
+                options: ["add", "edit", "done", "undo", "remove", "clearAll", "clearUser"],
                 default: "add",
                 description: "Task Action",
                 secondaryDescription: "Choose which task action to run",
@@ -46,96 +41,23 @@ const script: Firebot.CustomScript<Params> = {
             },
         };
     },
-    run: (runRequest): Promise<ScriptReturnObject> => {
+    run: (runRequest): ScriptReturnObject => {
         const { logger } = runRequest.modules;
-        const filepath = runRequest.parameters.filepath;
-
-        let taskList = runRequest.modules.customVariableManager.getCustomVariable('taskList') || {};
-
-        const username = runRequest.trigger.metadata.username;
-        const args = runRequest.trigger.metadata.userCommand.args;
-        //const trigger = runRequest.trigger.metadata.userCommand.trigger;
-
-        // For storing the message sent to chat
-        let chatMessage: string;
-
-        if (args.length == 0) {
-            logger.debug("No sub commands specified");
-            chatMessage = runRequest.parameters.commandHelpText;
-        } else {
-            logger.debug("args: " + runRequest.trigger.metadata.userCommand.args);
-
-            let taskText;
-            switch (String(runRequest.parameters.command)) {
-                // ["add", "edit", "parameters.command "undo", "remove", "clearAll", "clearUser"],
-                case "add":
-                    taskText = args.slice(1).join(' ');
-                    logger.debug(`Adding task "${taskText}" for ${username}`);
-                    taskList[username] = { task: taskText, done: false };
-                    chatMessage = `@${username} your task has been added.`;
-                    break;
-                case "edit":
-                    taskText = args.slice(1).join(' ');
-                    logger.debug(`Editing task  "${taskText}" for ${username}`);
-                    taskList[username] = { task: taskText, done: taskList[username].done !== undefined ? taskList[username].done : false };
-                    //chatMessage = `@${username} your task has been changed.`;
-                    break;
-                case "done":
-                    logger.debug(`Completeing task for ${username}`);
-                    taskList[username] = { task: taskList[username].task, done: true };
-                    chatMessage = `Well done @${username}. You task is complete.`;
-                    break;
-                case "undo":
-                    logger.debug(`Unding task for ${username}`);
-                    taskList[username] = { task: taskList[username].task, done: false };
-                    //chatMessage = `@${username}, back at it again.`;
-                    break;
-                case "remove":
-                    logger.debug(`Removing task for ${username}`);
-                    delete taskList[username];
-                    //chatMessage = `@${username} your task has been removed.`;
-                    break;
-                case "clearAll":
-                    logger.debug("Clearing all tasks");
-                    taskList = {};
-                    break;
-                case "clearUser":
-                    const obsoleteUsername = args[1].replace(/^@/, '');
-                    delete taskList[obsoleteUsername];
-                    logger.debug(`Clearing ${obsoleteUsername}`);
-                    //chatMessage = `@${obsoleteUsername}'s task is no more.`;
-                    break;
-                default:
+        const result = { success: true, effects: [] as Effects.Effect[] };
+        const requestHandler = taskHandlers.find((handler) => handler.command === (runRequest.parameters.command as unknown as string));  // HACK this is a workaround until the parameter type hinting aligns better with enum parameters
+        if (!!requestHandler) {
+            const isParserPresent = Object.prototype.hasOwnProperty.call(requestHandler, "parser");
+            const args = isParserPresent ? requestHandler.parser(runRequest) : {};
+            if (!!args) {
+                result.effects.push(...requestHandler.handler(runRequest, args));
+            } else {
+                logger.warn(`The command "${runRequest.parameters.command}" could not be run`);
             }
-            runRequest.modules.customVariableManager.addCustomVariable('taskList', taskList);
+        } else {
+            logger.warn(`Unhandled command "${runRequest.parameters.command}"`);
         }
-
-        // Return a Promise object, because we want to use effects
-        return new Promise((resolve, reject) => {
-
-            // Create a response
-            const response: ScriptReturnObject = {
-                success: true,
-                errorMessage: "Failed to run the script!", // If 'success' is false, this message is shown in a Firebot popup.
-                effects: [ // An array of effect objects to run
-                    {
-                        type: "firebot:chat",
-                        message: chatMessage,
-                        chatter: runRequest.parameters.sendMessagesAs
-                    },
-                    {
-                        type: "firebot:filewriter",
-                        filepath: filepath,
-                        text: JSON.stringify(taskList)
-                    },
-                ]
-            };
-
-            resolve(response);
-        });
-
+        return result as ScriptReturnObject;
     },
 };
-
 
 export default script;

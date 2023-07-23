@@ -20,7 +20,14 @@ function makeUserAccount(): UserAccount {
 const readJsonSync: ScriptModules["fs"]["readJsonSync"] = () => null;
 const log: LeveledLogMethod = () => void 0;
 
-export function makeParameters(filepath: string, command: TaskCommand = "add"): Params {
+interface TempParams {
+    command: string;
+    commandHelpText: string;
+    filepath: string;
+    sendMessagesAs: string;
+}
+
+export function makeParameters(filepath: string, command: TaskCommand = "add"): TempParams {
     return {
         command,
         commandHelpText: "",
@@ -30,7 +37,7 @@ export function makeParameters(filepath: string, command: TaskCommand = "add"): 
 }
 
 export function makeRunRequest(
-    parameters: Params,
+    parameters: any,
     sender: string,
     userCommand?: Partial<Effects.Trigger["metadata"]["userCommand"]>,
 ): RunRequest<Params> {

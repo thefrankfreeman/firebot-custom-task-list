@@ -15,7 +15,7 @@ export interface Params extends Record<string, any> {
     /**
      * The action to be taken on the user's task
      */
-    command: TaskCommand;
+    command: string[];  // string array for enum typing
 
     /**
      * The default help text to use for the command
@@ -30,7 +30,7 @@ export interface Params extends Record<string, any> {
     /**
      * Pass this back to the `response.effects.chatter` field for firebot
      */
-    sendMessagesAs: string;
+    sendMessagesAs: string[];  // string array for enum typing
 }
 
 /**
