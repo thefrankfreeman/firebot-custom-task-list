@@ -1,4 +1,54 @@
-# Firebot Custom Script in Typescript for enabling a Task list to Firebot
+# Firebot Custom Task List Script
+
+This repo contains a custom Firebot script, designed to add to a task list to Firebot, and some supplementary files display the task list in an OBS browser source. The repository is originally based on the [firebot custom script starter template](https://github.com/crowbartools/firebot-custom-script-starter)
+
+## Setup
+
+### I. Firebot
+
+Steps:
+
+1. Enable custom scripts
+
+   ```
+   Settings > Scripts > Custom Scripts: Enabled
+   ```
+
+2. Copy the `taskListScript.js` file into your Firebot script folder. See your OS's AppData folder (f.e. `~/.config/Firebot/v5/profiles/Main Profile/scripts/`):
+
+   ```
+   Win: %appdata%
+   MacOS: /Library/Application Support
+   Linux: ~/.config
+   ```
+
+3. Set up a `!task` command inside Firebot. Choose a or b:
+
+   - a. _batteries included_: Import `TaskSetup.firebotsetup` into Firebot
+   - b. Do it manually. (See `Docs.md` for more info on the sub commands)
+
+### II. OBS Studio
+
+OBS Studio requires the files `index.html`, `style.css`, and `tasklist.txt`. All 3 files need to be in the same folder.
+
+Steps:
+
+1. Add `index.html` from the extras folder as a OBS Browser source.
+2. Optional: Edit styles.css
+
+## Usage
+
+Quickstart:
+
+```
+user: !task add My new task
+user: !task done
+user: !task remove
+```
+
+See [Docs.md] for more.
+
+## Development
 
 ### Setup
 
@@ -17,19 +67,3 @@ Release:
 1. `npm run build`
 
 - Copy .js from `/dist`
-
-### Note
-
-- Keep the script definition object (that contains the `run`, `getScriptManifest`, and `getDefaultParameters` funcs) in the `index.ts` file as it's important those function names don't get minimized.
-- Edit the `"scriptOutputName"` property in `package.json` to change the filename of the outputted script.
-
-## Firebot setup
-
-1. Enable custom scripts
-2. Put the script file into your Firebot script folder
-3. Import `TaskSetup.firebotsetup` into Firebot to set up the commands that use this.
-
-## OBS Setup
-
-1. Add `index.html` from extras, to your OBS Browser source.
-2. Make sure `tasklist.txt` is in the same folder as `index.html`.
