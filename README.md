@@ -46,7 +46,7 @@ user: !task done
 user: !task remove
 ```
 
-See [Docs.md] for more.
+See [Docs.md](Docs.md) for more.
 
 ## Development
 
