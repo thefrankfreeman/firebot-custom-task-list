@@ -4,52 +4,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script>
-      setTimeout(function () {
-        location.reload();
-      }, 10000);
-      let element = document.querySelector("#root");
-      const client = new XMLHttpRequest();
-      client.open("GET", "tasklist.txt");
-      client.onreadystatechange = function () {
-        if (client.readyState === XMLHttpRequest.DONE) {
-          if (client.status === 200) {
-            let taskList;
-            try {
-              taskList = JSON.parse(client.responseText);
-            } catch (error) {
-              console.error("Error parsing JSON response:", error);
-              tasklist = [];
-            }
-            let combinedText = "";
-            for (let username in taskList) {
-              let done =
-                taskList[username] &&
-                taskList[username].done !== undefined &&
-                taskList[username].done
-                  ? " checked"
-                  : "";
-              let task =
-                taskList[username] && taskList[username].task !== undefined
-                  ? taskList[username].task
-                  : "Invalid task";
-
-              combinedText +=
-                '<li class="taskItem"><input class="taskCheckbox" type="checkbox"' +
-                done +
-                '><span class="username">' +
-                username +
-                '</span> - <span class="taskText">' +
-                task +
-                "</span></li>";
-            }
-            element.innerHTML = combinedText;
-          }
-        } else {
-          console.error("Request failed with status:", client.status);
-        }
-      };
-      client.send();
-    </script>
+    <script type="text/javascript" src="tasklist.js"></script>
   </body>
 </html>
